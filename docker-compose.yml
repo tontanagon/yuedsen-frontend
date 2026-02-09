@@ -1,13 +1,15 @@
+version: '3.7'
 services:
   frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "${APP_PORT}:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+    container_name: yuedsen-frontend
+    image: node:24.3.0
     restart: always
+    command: "tail -f /dev/null"
+    volumes:
+      - ".:/app"
+      - "/app/node_modules"
+    ports:
+      - ${PUBLIC_PORT}:3000
     networks:
       - app_network
 
