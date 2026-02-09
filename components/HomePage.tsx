@@ -191,6 +191,7 @@ const HomePage = () => {
 
         {/* Start Game Button */}
         <button 
+            onClick={() => window.location.href = '/game'}
             className={`mt-8 md:mt-10 bg-gradient-to-br from-gray-100 to-gray-300 hover:from-white hover:to-gray-200 text-gray-800 font-extrabold py-3 md:py-4 px-16 md:px-20 rounded-full shadow-[0_10px_20px_rgba(0,0,0,0.15)] border-b-[6px] border-gray-400 active:border-b-0 active:translate-y-2 transition-all transform hover:-translate-y-1 group relative overflow-hidden`}
         >
             <div className={`absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:animate-shimmer`}></div>
