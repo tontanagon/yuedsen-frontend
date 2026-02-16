@@ -2,9 +2,10 @@ version: '3.7'
 services:
   frontend:
     container_name: yuedsen-frontend
-    image: node:24.3.0
+    build:
+      context: .
+      dockerfile: Dockerfile
     restart: always
-    command: "tail -f /dev/null"
     volumes:
       - ".:/app"
       - "/app/node_modules"
