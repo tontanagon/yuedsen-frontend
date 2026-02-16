@@ -41,7 +41,7 @@ const HomePage = () => {
     }
 
     return (
-        <div className={`min-h-screen ${currentMode.bgColor} transition-colors duration-500 flex flex-col items-center justify-between p-4 md:p-6 font-sans text-gray-800 overflow-hidden relative`}>
+        <div className={`min-h-screen ${currentMode.bgColor} transition-colors duration-500 flex flex-col items-center justify-between p-4 md:p-6 font-sans text-gray-800 overflow-hidden relative gap-5`}>
 
             {/* Background decorations */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">

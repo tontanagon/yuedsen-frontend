@@ -6,7 +6,7 @@ interface HeaderProps {
 
 export default function Header({ currentMode }: HeaderProps) {
     return (
-        <div className="w-full flex justify-between items-start max-w-5xl mt-2 relative z-10 px-4">
+        <div className="w-full flex justify-between items-start max-w-5xl mt-2 mb-12 relative z-10 px-4">
             {/* Top Left: Mute Button */}
             <div className="flex flex-col items-center gap-2">
                 <button
@@ -22,7 +22,7 @@ export default function Header({ currentMode }: HeaderProps) {
             {/* Top Center: Title & Dynamic Subtitle */}
             <div className="absolute left-1/2 transform -translate-x-1/2 top-2 md:top-4 text-center w-full max-w-[200px] md:max-w-md pointer-events-none z-0">
                 <h1 className="text-2xl md:text-4xl font-black text-[#333] drop-shadow-md tracking-wide">
-                    เหม่งเอ็กเซชายยยยย
+                    เหม่งเอ็กเซชายยยยย55555555
                 </h1>
                 <div className="overflow-hidden h-8 md:h-10 mt-1">
                     <p
