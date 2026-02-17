@@ -10,6 +10,7 @@ import NavItem from './home/NavItem';
 const HomePage = () => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [savedDate, setSavedDate] = useState<number>(1);
+    const [currentDay, setCurrentDay] = useState<number>(24); // เปลี่ยนเป็นวันที่ 24 เพื่อทดสอบ
     const [isLoading, setIsLoading] = useState(true);
     const currentMode = modes[currentIndex];
 
@@ -22,6 +23,16 @@ const HomePage = () => {
             } else {
                 localStorage.setItem('user_current_date', '1');
             }
+
+            // Mockup API call to get user progress
+            // TODO: แทนที่ด้วย API จริง
+            const mockupProgress = async () => {
+                // Simulate API call - ใช้ค่า 24 เพื่อทดสอบ
+                const progress = 24; // ตั้งค่าเป็น 24 เพื่อทดสอบรูปที่ 4
+                setCurrentDay(progress);
+            };
+
+            mockupProgress();
             setIsLoading(false);
         }, 1000);
 
@@ -52,7 +63,7 @@ const HomePage = () => {
             {/* Header Section */}
             <Header currentMode={currentMode} />
 
-            {/* Main Content (Carousel) */}
+            {/* Main Content (Carousel) - ส่ง currentDay ไปด้วย */}
             <ModeCarousel
                 modes={modes}
                 currentIndex={currentIndex}
@@ -61,6 +72,7 @@ const HomePage = () => {
                 onPrev={prevMode}
                 onSelectMode={setCurrentIndex}
                 savedDate={savedDate}
+                currentDay={currentDay}
             />
 
             {/* Footer Navigation */}

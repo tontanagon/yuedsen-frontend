@@ -2,11 +2,25 @@ export interface ModeConfig {
     id: number;
     title: string;
     icon: string;
-    imageOverride: string | null;
+    imageOverride: string[] | null; // เปลี่ยนเป็น array
     colorTheme: string;
     bgColor: string;
     buttonColor: string;
     accentColor: string;
+}
+
+// Helper function: เลือกรูปตามวันที่ (1-30)
+export function getImageForDay(images: string[] | null, day: number): string | null {
+    if (!images || images.length === 0) return null;
+
+    // แบ่งเป็น 4 ช่วง: วันที่ 1-7, 8-15, 16-23, 24-30
+    if (day >= 1 && day <= 7) return images[0];
+    if (day >= 8 && day <= 15) return images[1];
+    if (day >= 16 && day <= 23) return images[2];
+    if (day >= 24 && day <= 30) return images[3];
+
+    // ถ้าเกิน 30 วัน ให้ใช้รูปสุดท้าย
+    return images[images.length - 1];
 }
 
 export const modes: ModeConfig[] = [
@@ -14,7 +28,12 @@ export const modes: ModeConfig[] = [
         id: 0,
         title: "รักษา", // Treatment
         icon: "🩹",
-        imageOverride: null,
+        imageOverride: [
+            "/images/image_0.png",  // Days 1-7
+            "/images/image_2.png",  // Days 8-15
+            "/images/image_3.png",  // Days 16-23
+            "/images/image_4.png"   // Days 24-30
+        ],
         colorTheme: "red",
         bgColor: "bg-[#ffccb0]",
         buttonColor: "bg-[#b30000]",
@@ -24,7 +43,12 @@ export const modes: ModeConfig[] = [
         id: 1,
         title: "ป้องกัน", // Prevention
         icon: "🛡️",
-        imageOverride: null,
+        imageOverride: [
+            "/images/image_0.png",
+            "/images/image_2.png",
+            "/images/image_3.png",
+            "/images/image_4.png"
+        ],
         colorTheme: "blue",
         bgColor: "bg-[#b0ccff]",
         buttonColor: "bg-[#0047b3]",
@@ -34,7 +58,12 @@ export const modes: ModeConfig[] = [
         id: 2,
         title: "ปรับบุคลิกภาพ", // Personality/Posture
         icon: "🧘",
-        imageOverride: null,
+        imageOverride: [
+            "/images/image_0.png",
+            "/images/image_2.png",
+            "/images/image_3.png",
+            "/images/image_4.png"
+        ],
         colorTheme: "green",
         bgColor: "bg-[#b0ffcc]",
         buttonColor: "bg-[#00b347]",

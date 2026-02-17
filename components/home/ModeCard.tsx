@@ -1,10 +1,15 @@
-import { ModeConfig } from './types';
+import { ModeConfig, getImageForDay } from './types';
+import Image from 'next/image';
 
 interface ModeCardProps {
     mode: ModeConfig;
+    currentDay: number; // เพิ่ม prop สำหรับวันที่ปัจจุบัน
 }
 
-export default function ModeCard({ mode }: ModeCardProps) {
+export default function ModeCard({ mode, currentDay }: ModeCardProps) {
+    // เลือกรูปตามวันที่
+    const selectedImage = getImageForDay(mode.imageOverride, currentDay);
+
     return (
         <div className="relative w-64 h-64 md:w-96 md:h-96 perspective-1000">
             <div
@@ -16,11 +21,24 @@ export default function ModeCard({ mode }: ModeCardProps) {
                     {/* Decorative background blob inside */}
                     <div className={`absolute -bottom-10 -right-10 w-32 h-32 ${mode.bgColor} rounded-full opacity-50 blur-xl transition-colors duration-500`}></div>
 
-                    {/* Character/Icon Placeholder */}
-                    <div className="relative z-10 flex flex-col items-center mb-6">
-                        <div className="text-7xl md:text-8xl mb-4 transform group-hover:scale-110 transition-transform duration-300 drop-shadow-md">
-                            {mode.icon}
-                        </div>
+                    {/* Character/Icon/Image */}
+                    <div className="relative z-10 flex flex-col items-center">
+                        {selectedImage ? (
+                            // แสดงรูปภาพที่เลือกตามวันที่
+                            <div className="relative w-[380px] h-[380px] md:w-[520px] md:h-[520px] transform group-hover:scale-105 transition-transform duration-300">
+                                <Image
+                                    src={selectedImage}
+                                    alt={mode.title}
+                                    fill
+                                    className="object-contain drop-shadow-lg"
+                                />
+                            </div>
+                        ) : (
+                            // แสดง emoji ถ้าไม่มีรูป
+                            <div className="text-7xl md:text-8xl mb-4 transform group-hover:scale-110 transition-transform duration-300 drop-shadow-md">
+                                {mode.icon}
+                            </div>
+                        )}
                         <span className="text-xs text-gray-400 font-medium absolute -bottom-8">แตะเพื่อดูรายละเอียด</span>
                     </div>
                 </div>

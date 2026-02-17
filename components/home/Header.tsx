@@ -22,7 +22,7 @@ export default function Header({ currentMode }: HeaderProps) {
             {/* Top Center: Title & Dynamic Subtitle */}
             <div className="absolute left-1/2 transform -translate-x-1/2 top-2 md:top-4 text-center w-full max-w-[200px] md:max-w-md pointer-events-none z-0">
                 <h1 className="text-2xl md:text-4xl font-black text-[#333] drop-shadow-md tracking-wide">
-                    เหม่งเอ็กเซชายยยยย
+                    YUEDSEN
                 </h1>
                 <div className="overflow-hidden h-8 md:h-10 mt-1">
                     <p
