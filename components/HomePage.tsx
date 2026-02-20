@@ -52,13 +52,10 @@ const HomePage = () => {
     }
 
     return (
-        <div className={`min-h-screen ${currentMode.bgColor} transition-colors duration-500 flex flex-col items-center justify-between p-4 md:p-6 font-sans text-gray-800 overflow-hidden relative`}>
-
-            {/* Background decorations */}
-            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-                <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-white opacity-20 rounded-full blur-3xl"></div>
-                <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-white opacity-20 rounded-full blur-3xl"></div>
-            </div>
+        <div 
+            className="min-h-screen flex flex-col items-center justify-between p-4 md:p-6 font-sans text-gray-800 overflow-hidden relative bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: "url('/images/background_home.png')" }}
+        >
 
             {/* Header Section */}
             <Header currentMode={currentMode} />
@@ -76,22 +73,21 @@ const HomePage = () => {
             />
 
             {/* Footer Navigation */}
-            <div className="w-full max-w-3xl flex justify-around items-end mb-4 md:mb-8 z-10">
+            <div className="bg-white/70 backdrop-blur-md rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.1)] border border-white/80 px-10 py-4 mb-4 md:mb-8 z-10 flex justify-center items-center gap-10 md:gap-20">
                 <NavItem
                     icon="bar_chart"
                     label="Dashboard"
-                    color={currentMode.buttonColor}
+                    color="bg-gradient-to-br from-[#53A0DF] to-[#3B80C0]"
                 />
                 <NavItem
                     icon="star"
                     label="Score"
-                    color={currentMode.buttonColor}
-                    size="large"
+                    color="bg-gradient-to-br from-[#FCD057] to-[#F1B12D]"
                 />
                 <NavItem
                     icon="lightbulb"
                     label="ความรู้"
-                    color={currentMode.buttonColor}
+                    color="bg-gradient-to-br from-[#ED8C57] to-[#E3662A]"
                 />
             </div>
 

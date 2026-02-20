@@ -26,22 +26,22 @@ export function getImageForDay(images: string[] | null, day: number): string | n
 export const modes: ModeConfig[] = [
     {
         id: 0,
-        title: "รักษา", // Treatment
+        title: "รักษา",
         icon: "🩹",
         imageOverride: [
-            "/images/image_0.png",  // Days 1-7
-            "/images/image_2.png",  // Days 8-15
-            "/images/image_3.png",  // Days 16-23
-            "/images/image_4.png"   // Days 24-30
+            "/images/image_0.png",
+            "/images/image_2.png",
+            "/images/image_3.png",
+            "/images/image_4.png"
         ],
-        colorTheme: "red",
-        bgColor: "bg-[#ffccb0]",
-        buttonColor: "bg-[#b30000]",
-        accentColor: "text-red-700"
+        colorTheme: "green",
+        bgColor: "bg-transparent",
+        buttonColor: "bg-[#7BC69A]",
+        accentColor: "text-[#58B372]"
     },
     {
         id: 1,
-        title: "ป้องกัน", // Prevention
+        title: "ป้องกัน",
         icon: "🛡️",
         imageOverride: [
             "/images/image_0.png",
@@ -49,14 +49,14 @@ export const modes: ModeConfig[] = [
             "/images/image_3.png",
             "/images/image_4.png"
         ],
-        colorTheme: "blue",
-        bgColor: "bg-[#b0ccff]",
-        buttonColor: "bg-[#0047b3]",
-        accentColor: "text-blue-700"
+        colorTheme: "green",
+        bgColor: "bg-transparent",
+        buttonColor: "bg-[#7BC69A]",
+        accentColor: "text-[#58B372]"
     },
     {
         id: 2,
-        title: "ปรับบุคลิกภาพ", // Personality/Posture
+        title: "เสริมบุคลิกภาพ",
         icon: "🧘",
         imageOverride: [
             "/images/image_0.png",
@@ -65,8 +65,8 @@ export const modes: ModeConfig[] = [
             "/images/image_4.png"
         ],
         colorTheme: "green",
-        bgColor: "bg-[#b0ffcc]",
-        buttonColor: "bg-[#00b347]",
-        accentColor: "text-green-700"
+        bgColor: "bg-transparent",
+        buttonColor: "bg-[#7BC69A]",
+        accentColor: "text-[#58B372]"
     }
 ];

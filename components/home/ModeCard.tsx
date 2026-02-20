@@ -11,15 +11,18 @@ export default function ModeCard({ mode, currentDay }: ModeCardProps) {
     const selectedImage = getImageForDay(mode.imageOverride, currentDay);
 
     return (
-        <div className="relative w-64 h-64 md:w-96 md:h-96 perspective-1000">
+        <div className="relative w-64 h-64 md:w-96 md:h-96 flex items-center justify-center">
+            {/* Outer rings to mimic the concentric circles in the image */}
+            <div className="absolute inset-0 rounded-full border-[6px] border-[#93DDAA]/50 m-[-18px]"></div>
+            <div className="absolute inset-0 rounded-full border-[6px] border-[#68C58E]/70 m-[-8px]"></div>
+            <div className="absolute inset-0 rounded-full border-[10px] border-white/90 shadow-xl m-[2px]"></div>
+            
             <div
-                className="w-full h-full rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center shadow-[0_20px_50px_rgba(0,0,0,0.15)] border-4 border-white/60 animate-fade-in-scale"
+                className="w-full h-full rounded-full bg-white/40 backdrop-blur-sm flex items-center justify-center animate-fade-in-scale z-10"
             >
                 {/* Inner White Circle */}
-                <div className="w-[85%] h-[85%] bg-white rounded-full flex flex-col items-center justify-center shadow-inner p-6 overflow-hidden relative group cursor-pointer hover:shadow-lg transition-shadow">
+                <div className="w-[88%] h-[88%] bg-[#E8F8EE] rounded-full flex flex-col items-center justify-center shadow-inner overflow-hidden relative group cursor-pointer hover:shadow-lg transition-shadow border-4 border-[#76DC91]/30">
 
-                    {/* Decorative background blob inside */}
-                    <div className={`absolute -bottom-10 -right-10 w-32 h-32 ${mode.bgColor} rounded-full opacity-50 blur-xl transition-colors duration-500`}></div>
 
                     {/* Character/Icon/Image */}
                     <div className="relative z-10 flex flex-col items-center">

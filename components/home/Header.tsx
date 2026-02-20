@@ -25,28 +25,27 @@ export default function Header({ currentMode }: HeaderProps) {
     };
 
     return (
-        <div className="w-full flex justify-between items-start max-w-5xl mt-2 relative z-10 px-4">
-            {/* Top Left: Mute Button */}
-            <div className="flex flex-col items-center gap-2">
-                <button
-                    className={`w-14 h-14 md:w-16 md:h-16 ${currentMode.buttonColor} rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-all duration-300 border-4 border-white/30`}
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 md:h-8 md:w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-                    </svg>
-                </button>
-            </div>
+        <div className="w-full h-20 max-w-5xl mt-2 relative z-10 px-4">
 
             {/* Top Center: Title & Dynamic Subtitle */}
-            <div className="absolute left-1/2 transform -translate-x-1/2 top-2 md:top-4 text-center w-full max-w-[200px] md:max-w-md pointer-events-none z-0">
-                <h1 className="text-2xl md:text-4xl font-black text-[#333] drop-shadow-md tracking-wide">
+            <div className="absolute left-1/2 transform -translate-x-1/2 top-4 md:top-6 text-center w-full max-w-2xl pointer-events-none z-0 flex items-center justify-center gap-3">
+                <h1 
+                    className="text-3xl md:text-5xl font-black text-white tracking-widest"
+                    style={{ 
+                        textShadow: '0 4px 6px rgba(0,0,0,0.1), -2px -2px 0 #58B372, 2px -2px 0 #58B372, -2px 2px 0 #58B372, 2px 2px 0 #58B372, 0 3px 0 #459E60',
+                        WebkitTextStroke: '2px #58B372'
+                    }}
+                >
                     YUEDSEN
                 </h1>
-                <div className="overflow-hidden h-8 md:h-10 mt-1">
+                <div className="overflow-hidden">
                     <p
                         key={currentMode.title}
-                        className={`text-lg md:text-2xl font-bold ${currentMode.accentColor} animate-slide-up transition-colors duration-300`}
+                        className="text-2xl md:text-4xl font-extrabold text-white tracking-widest animate-slide-up"
+                        style={{ 
+                            textShadow: '0 4px 6px rgba(0,0,0,0.1), -2px -2px 0 #58B372, 2px -2px 0 #58B372, -2px 2px 0 #58B372, 2px 2px 0 #58B372, 0 3px 0 #459E60',
+                            WebkitTextStroke: '1px #58B372'
+                        }}
                     >
                         ({currentMode.title})
                     </p>
@@ -54,8 +53,9 @@ export default function Header({ currentMode }: HeaderProps) {
             </div>
 
             {/* Top Right: User Profile or Login Button */}
-            {session ? (
-                <div className="relative">
+            <div className="absolute right-4 md:right-8 top-4 md:top-6 z-20">
+                {session ? (
+                    <div className="relative">
                     <button
                         onClick={() => setDropdownOpen(!dropdownOpen)}
                         className={`w-12 h-12 md:w-14 md:h-14 rounded-full shadow-lg border-2 border-white/40 overflow-hidden hover:scale-105 transition-all duration-300`}
@@ -91,7 +91,8 @@ export default function Header({ currentMode }: HeaderProps) {
                         <span className="text-white font-bold text-sm md:text-base tracking-wide hidden sm:inline">Login</span>
                     </button>
                 </Link>
-            )}
+                )}
+            </div>
         </div>
     );
 }
