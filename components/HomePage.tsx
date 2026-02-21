@@ -20,10 +20,26 @@ const HomePage = () => {
         let isMounted = true;
 
         const fetchProgress = async () => {
-            try {
-                const token = apiClient.getToken();
-                if (!token) throw new Error("No token found");
+            const token = apiClient.getToken();
 
+            // ถ้าไม่มี token ให้ fallback เงียบๆ ไม่ต้อง fetch API
+            if (!token) {
+                const storedDate = localStorage.getItem('user_current_date');
+                if (isMounted) {
+                    if (storedDate) {
+                        const dateVal = parseInt(storedDate, 10);
+                        setSavedDate(dateVal);
+                        setCurrentDay(dateVal);
+                    } else {
+                        setSavedDate(1);
+                        setCurrentDay(1);
+                    }
+                    setIsLoading(false);
+                }
+                return;
+            }
+
+            try {
                 // Fetch the game plan data which contains the user's progress for this specific category
                 const data = await apiClient.get(`/game/plan?category_id=${currentMode.id + 1}`);
                 if (isMounted && data && data.process) {
@@ -34,7 +50,7 @@ const HomePage = () => {
                 }
             } catch (error) {
                 console.error("Failed to fetch user progress:", error);
-                
+
                 // Fallback to local storage if API fails
                 const storedDate = localStorage.getItem('user_current_date');
                 if (storedDate) {
@@ -71,7 +87,7 @@ const HomePage = () => {
     }
 
     return (
-        <div 
+        <div
             className="min-h-screen flex flex-col items-center justify-between p-4 md:p-6 font-sans text-gray-800 overflow-hidden relative bg-cover bg-center bg-no-repeat"
             style={{ backgroundImage: "url('/images/background_home.png')" }}
         >
