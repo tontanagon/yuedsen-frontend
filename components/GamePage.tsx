@@ -21,6 +21,7 @@ interface PoseConditionRule {
 interface PoseData {
     id: number;
     pose_name: string;
+    pose_image?: string;
     pose_description: string;
     pose_condition: string;
     
@@ -92,7 +93,7 @@ const GamePage = () => {
     const [allPlans, setAllPlans] = useState<any[]>([]);
     const [currentPlanIndex, setCurrentPlanIndex] = useState<number>(0);
     const [showTransition, setShowTransition] = useState<boolean>(false);
-    const [transitionCountdown, setTransitionCountdown] = useState<number>(5);
+    const [transitionCountdown, setTransitionCountdown] = useState<number>(3);
     const [isDayCompleted, setIsDayCompleted] = useState<boolean>(false);
     const [isBlockedToday, setIsBlockedToday] = useState<boolean>(false);
     
@@ -105,6 +106,7 @@ const GamePage = () => {
         setCurrentPose({
             id: dbPose.id,
             pose_name: dbPose.pose_name,
+            pose_image: dbPose.pose_image,
             pose_description: dbPose.pose_description,
             pose_condition: dbPose.pose_condition,
             pose_point: dbPose.pose_point,
@@ -152,25 +154,34 @@ const GamePage = () => {
                 const p3 = landmarks[rule.points[2]];
 
                 if (p1 && p2 && p3) {
-                    const angle = calculateAngle(p1, p2, p3);
                     let score = 0;
-                    
-                    if (angle >= rule.min && angle <= rule.max) {
-                        score = 100;
+                    // ตรวจสอบความชัดเจนว่ามีข้อต่อโผล่ในกล้องจริงๆ ไม่ให้เดามั่ว
+                    const minVis = 0.6;
+                    if ((p1.visibility && p1.visibility < minVis) ||
+                        (p2.visibility && p2.visibility < minVis) ||
+                        (p3.visibility && p3.visibility < minVis)) {
+                        currentFeedback = "⚠️ กรุณาขยับให้เห็นข้อต่อในกล้องชัดๆ ค่ะ";
+                        score = 0;
                     } else {
-                        // Calculate deviation range
-                        const distMin = Math.abs(angle - rule.min);
-                        const distMax = Math.abs(angle - rule.max);
-                        const deviation = Math.min(distMin, distMax);
+                        const angle = calculateAngle(p1, p2, p3);
                         
-                        score = Math.max(0, 100 - (deviation * 2));
+                        if (angle >= rule.min && angle <= rule.max) {
+                            score = 100;
+                        } else {
+                            // Calculate deviation range
+                            const distMin = Math.abs(angle - rule.min);
+                            const distMax = Math.abs(angle - rule.max);
+                            const deviation = Math.min(distMin, distMax);
+                            
+                            score = Math.max(0, 100 - (deviation * 2));
 
-                        // ให้คำแนะนำจากจุดแรกที่ผิดพลาด
-                        if (!currentFeedback) { 
-                            if (angle < rule.min) {
-                                currentFeedback = `กรุณากางขยับหรือเพิ่มมุม ${rule.name} ขึ้นอีกนิดค่ะ`;
-                            } else {
-                                currentFeedback = `กรุณาหดหรือปรับมุม ${rule.name} ลงอีกนิดค่ะ`;
+                            // ให้คำแนะนำจากจุดแรกที่ผิดพลาด
+                            if (!currentFeedback) { 
+                                if (angle < rule.min) {
+                                    currentFeedback = `กรุณากางหรือเพิ่มมุม ${rule.name} ขึ้นอีกนิดค่ะ`;
+                                } else {
+                                    currentFeedback = `กรุณาหดหรือปรับมุม ${rule.name} ลงอีกนิดค่ะ`;
+                                }
                             }
                         }
                     }
@@ -196,9 +207,25 @@ const GamePage = () => {
                      const p3 = landmarks[points[2]];
                      
                      if (p1 && p2 && p3) {
+                         // บังคับว่าต้องเห็นข้อต่อครบทั้ง 3 จุด ด้วยความมั่นใจเกิน 60%
+                         const minVis = 0.6;
+                         if ((p1.visibility && p1.visibility < minVis) ||
+                             (p2.visibility && p2.visibility < minVis) ||
+                             (p3.visibility && p3.visibility < minVis)) {
+                             return { score: 0, feedback: "⚠️ จัดตำแหน่งให้เห็นแขน/ข้อต่อ ในกล้องให้ชัดขึ้นค่ะ" };
+                         }
+
                          const angle = calculateAngle(p1, p2, p3);
-                         const min = currentPose.pose_min || 0;
-                         const max = currentPose.pose_max || 180;
+                         let min = currentPose.pose_min || 0;
+                         let max = currentPose.pose_max || 0;
+                         
+                         // ถ้าฐานข้อมูลไม่ได้ตั้งค่ามา (0 ทั้งคู่) ให้ Default เป็นท่าเหยียดตรง (150-180) เพื่อบังคับให้ผู้ทำต้องขยับจริงๆ
+                         if (min === 0 && max === 0) {
+                             min = 150;
+                             max = 180;
+                         } else if (max === 0) {
+                             max = 180;
+                         }
                          
                          if (angle >= min && angle <= max) return { score: 100, feedback: "" };
                          
@@ -226,7 +253,10 @@ const GamePage = () => {
         let isMounted = true;
         const fetchGamePlan = async () => {
             try {
-                const data = await apiClient.get('/game/plan');
+                const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
+                const categoryId = searchParams.get('category_id') || '1';
+
+                const data = await apiClient.get(`/game/plan?category_id=${categoryId}`);
                 if (isMounted && data) {
                     setProcessData(data.process);
                     
@@ -285,11 +315,15 @@ const GamePage = () => {
             const nextIndex = currentPlanIndex + 1;
             if (nextIndex < allPlans.length) {
                 setShowTransition(true);
-                setTransitionCountdown(5); // วินาทีนับถอยหลังไปท่าต่อไป
+                setTransitionCountdown(3); // วินาทีนับถอยหลังไปท่าต่อไป
             } else {
                 setIsDayCompleted(true);
                 // Call API to complete the day and update userprogress
-                apiClient.post('/game/complete', {}).catch(e => console.error("Failed to complete day", e));
+                const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
+                const categoryId = parseInt(searchParams.get('category_id') || '1', 10);
+                
+                apiClient.post('/game/complete', { category_id: categoryId })
+                         .catch(e => console.error("Failed to complete day", e));
             }
         }
     }, [timeLeft, isRunning, showTransition, isDayCompleted, currentPose, currentPlanIndex, allPlans]);
@@ -483,7 +517,7 @@ const GamePage = () => {
                 </div>
                 
                 <div className="text-center">
-                     <h1 className="text-xl md:text-2xl font-bold text-gray-800">ชื่อท่า: {currentPose.pose_name}</h1>
+                     <h1 className="text-xl md:text-2xl font-bold text-gray-800">ชื่อท่า: {currentPose?.pose_name || "กำลังดึงข้อมูล"}</h1>
                      <p className="text-gray-600 font-medium">ความถูกต้อง: <span className="text-3xl font-bold text-blue-600">{accuracy}%</span></p>
                 </div>
 
@@ -530,16 +564,31 @@ const GamePage = () => {
                 {/* Right Side: Reference Model / Description */}
                 <div className="relative w-full md:w-1/2 aspect-video bg-white rounded-xl overflow-hidden shadow-2xl border-4 border-white flex flex-col items-center justify-center p-6 text-center">
                     {/* Placeholder for Reference Image/Model */}
-                    <div className="flex flex-col items-center mb-6">
-                         <div className="text-9xl mb-4">🧘</div>
-                         <p className="text-gray-400 font-bold text-xl">ตัวอย่างท่า (Reference)</p>
+                    <div className="flex flex-col items-center mb-6 w-full h-full justify-center">
+                        {currentPose?.pose_image ? (
+                            <div className="relative w-48 h-48 md:w-64 md:h-64 mb-4">
+                                {/* Using regular img tag for external or internal dynamic paths */}
+                                <img 
+                                    src={currentPose.pose_image.startsWith('http') ? currentPose.pose_image : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/${currentPose.pose_image.replace(/^\/+/, '')}`}
+                                    alt={currentPose.pose_name}
+                                    className="w-full h-full object-contain drop-shadow-lg"
+                                    onError={(e) => {
+                                        // Fallback to local public path if backend prefix fails
+                                        (e.target as HTMLImageElement).src = currentPose?.pose_image?.startsWith('/') ? currentPose.pose_image : `/${currentPose?.pose_image}`;
+                                    }}
+                                />
+                            </div>
+                        ) : (
+                            <div className="text-9xl mb-4 drop-shadow-md">🧘</div>
+                        )}
+                        <p className="text-gray-400 font-bold text-xl">ตัวอย่างท่า (Reference)</p>
                     </div>
                     
                     <div className="bg-blue-50 p-4 rounded-lg">
                         <h3 className="font-bold text-blue-800 mb-2">คำอธิบาย:</h3>
-                        <p className="text-gray-700">{currentPose.pose_description}</p>
+                        <p className="text-gray-700">{currentPose?.pose_description || "-"}</p>
                         <div className="mt-2 text-sm text-red-500 font-semibold">
-                            ⚠️ ข้อควรระวัง: {currentPose.pose_condition}
+                            ⚠️ ข้อควรระวัง: {currentPose?.pose_condition || "-"}
                         </div>
                     </div>
                 </div>
