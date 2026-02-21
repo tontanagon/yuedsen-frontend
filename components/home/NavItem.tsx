@@ -1,16 +1,19 @@
+import Link from 'next/link';
+
 interface NavItemProps {
     icon: string;
     label: string;
     color: string;
     size?: 'normal' | 'large';
+    href?: string;
 }
 
-export default function NavItem({ icon, label, color, size = 'normal' }: NavItemProps) {
+export default function NavItem({ icon, label, color, size = 'normal', href }: NavItemProps) {
     const isLarge = size === 'large';
     const sizeClasses = isLarge ? "w-14 h-14 md:w-16 md:h-16" : "w-12 h-12 md:w-14 md:h-14";
     const iconSize = isLarge ? "text-2xl md:text-3xl" : "text-xl md:text-2xl";
 
-    return (
+    const inner = (
         <div className="flex flex-col items-center gap-1 group cursor-pointer">
             <div className={`${sizeClasses} ${color} rounded-full shadow-lg flex items-center justify-center transition-all duration-300 transform group-hover:-translate-y-1 border-[3px] border-white/90 ring-[6px] ring-white/40`}>
                 <span className={`text-white ${iconSize} flex items-center justify-center`}>
@@ -34,4 +37,10 @@ export default function NavItem({ icon, label, color, size = 'normal' }: NavItem
             <span className="font-bold text-[#2A6546] text-xs md:text-sm mt-1">{label}</span>
         </div>
     );
+
+    if (href) {
+        return <Link href={href}>{inner}</Link>;
+    }
+
+    return inner;
 }

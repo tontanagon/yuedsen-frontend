@@ -31,7 +31,7 @@ const HomePage = () => {
                 }
             } catch (error) {
                 console.error("Failed to fetch user progress:", error);
-                
+
                 // Fallback to local storage if API fails
                 const storedDate = localStorage.getItem('user_current_date');
                 if (storedDate) {
@@ -68,7 +68,7 @@ const HomePage = () => {
     }
 
     return (
-        <div 
+        <div
             className="min-h-screen flex flex-col items-center justify-between p-4 md:p-6 font-sans text-gray-800 overflow-hidden relative bg-cover bg-center bg-no-repeat"
             style={{ backgroundImage: "url('/images/background_home.png')" }}
         >
@@ -104,6 +104,7 @@ const HomePage = () => {
                     icon="lightbulb"
                     label="ความรู้"
                     color="bg-gradient-to-br from-[#ED8C57] to-[#E3662A]"
+                    href="/knowledge"
                 />
             </div>
 
