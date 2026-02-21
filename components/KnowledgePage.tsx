@@ -226,15 +226,15 @@ function ExternalLinkIcon() {
 
 function ReferenceCard({ item }: { item: Reference }) {
     return (
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm border border-white/60 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
-            <p className="font-bold text-gray-800 text-sm leading-tight">{item.institution}</p>
-            <p className="text-xs text-gray-400 mt-0.5 mb-2">{item.country}</p>
-            <p className="text-gray-600 text-sm leading-relaxed mb-3">{item.description}</p>
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 shadow-sm border border-white/60 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
+            <p className="font-bold text-gray-800 text-base leading-tight">{item.institution}</p>
+            <p className="text-sm text-gray-400 mt-1 mb-2">{item.country}</p>
+            <p className="text-gray-600 text-base leading-relaxed mb-3">{item.description}</p>
             <a
                 href={item.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors"
             >
                 <ExternalLinkIcon />
                 {item.linkLabel}
@@ -245,18 +245,18 @@ function ReferenceCard({ item }: { item: Reference }) {
 
 function TimeRefCard({ item }: { item: TimeRef }) {
     return (
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm border border-white/60 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
-            <span className="inline-block bg-amber-100 text-amber-700 text-xs font-bold px-2.5 py-1 rounded-full mb-2">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 shadow-sm border border-white/60 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
+            <span className="inline-block bg-amber-100 text-amber-700 text-sm font-bold px-3 py-1 rounded-full mb-2">
                 {item.claim}
             </span>
-            <p className="font-bold text-gray-800 text-sm">{item.institution}</p>
-            <p className="text-xs text-gray-400 mb-2">{item.country}</p>
-            <p className="text-gray-600 text-sm leading-relaxed mb-3">{item.description}</p>
+            <p className="font-bold text-gray-800 text-base">{item.institution}</p>
+            <p className="text-sm text-gray-400 mb-2">{item.country}</p>
+            <p className="text-gray-600 text-base leading-relaxed mb-3">{item.description}</p>
             <a
                 href={item.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors"
             >
                 <ExternalLinkIcon />
                 {item.linkLabel}
@@ -289,8 +289,10 @@ export default function KnowledgePage() {
                     </svg>
                 </button>
                 <div>
-                    <h1 className="text-xl font-extrabold text-[#2A6546]">แหล่งความรู้</h1>
-                    <p className="text-xs text-gray-500">อ้างอิงทางการแพทย์และวิทยาศาสตร์การกีฬา</p>
+                    <h1 className="text-3xl font-extrabold bg-gradient-to-r from-[#2A6546] to-[#3B9E6E] bg-clip-text text-transparent leading-tight">
+                        แหล่งความรู้
+                    </h1>
+                    <p className="text-sm text-gray-500 font-medium mt-0.5">อ้างอิงทางการแพทย์และวิทยาศาสตร์การกีฬา</p>
                 </div>
             </div>
 
@@ -301,23 +303,23 @@ export default function KnowledgePage() {
                         <button
                             key={z.id}
                             onClick={() => setActiveZone(z.id)}
-                            className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 whitespace-nowrap ${activeZone === z.id
-                                    ? `bg-gradient-to-br ${z.gradient} text-white shadow-md`
-                                    : "text-gray-500 hover:bg-white/60"
+                            className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 whitespace-nowrap ${activeZone === z.id
+                                ? `bg-gradient-to-br ${z.gradient} text-white shadow-md`
+                                : "text-gray-500 hover:bg-white/60"
                                 }`}
                         >
-                            <span>{z.icon}</span>
+                            <span className="text-base">{z.icon}</span>
                             <span>{z.title.replace("โซน", "")}</span>
                         </button>
                     ))}
                     <button
                         onClick={() => setActiveZone("time")}
-                        className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 whitespace-nowrap ${activeZone === "time"
-                                ? "bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-md"
-                                : "text-gray-500 hover:bg-white/60"
+                        className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 whitespace-nowrap ${activeZone === "time"
+                            ? "bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-md"
+                            : "text-gray-500 hover:bg-white/60"
                             }`}
                     >
-                        <span>⏱️</span>
+                        <span className="text-base">⏱️</span>
                         <span>เวลา / ครั้ง</span>
                     </button>
                 </div>
@@ -327,12 +329,12 @@ export default function KnowledgePage() {
             <div className="flex-1 px-4 pb-10 overflow-y-auto">
                 {activeZone !== "time" && currentZone ? (
                     <>
-                        <div className={`bg-gradient-to-br ${currentZone.gradient} rounded-2xl p-4 mb-4 shadow-lg`}>
-                            <div className="flex items-center gap-3">
-                                <span className="text-3xl">{currentZone.icon}</span>
+                        <div className={`bg-gradient-to-br ${currentZone.gradient} rounded-2xl p-5 mb-4 shadow-lg`}>
+                            <div className="flex items-center gap-4">
+                                <span className="text-4xl">{currentZone.icon}</span>
                                 <div>
-                                    <h2 className="font-extrabold text-white text-lg leading-tight">{currentZone.title}</h2>
-                                    <p className="text-white/80 text-xs mt-0.5">{currentZone.subtitle}</p>
+                                    <h2 className="font-extrabold text-white text-2xl leading-tight">{currentZone.title}</h2>
+                                    <p className="text-white/80 text-sm mt-1">{currentZone.subtitle}</p>
                                 </div>
                             </div>
                         </div>
@@ -344,12 +346,12 @@ export default function KnowledgePage() {
                     </>
                 ) : activeZone === "time" ? (
                     <>
-                        <div className="bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl p-4 mb-4 shadow-lg">
-                            <div className="flex items-center gap-3">
-                                <span className="text-3xl">⏱️</span>
+                        <div className="bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl p-5 mb-4 shadow-lg">
+                            <div className="flex items-center gap-4">
+                                <span className="text-4xl">⏱️</span>
                                 <div>
-                                    <h2 className="font-extrabold text-white text-lg leading-tight">เวลาและจำนวนครั้ง</h2>
-                                    <p className="text-white/80 text-xs mt-0.5">ค้างท่า 10-30 วินาที | ทำ 10-15 ครั้ง</p>
+                                    <h2 className="font-extrabold text-white text-2xl leading-tight">เวลาและจำนวนครั้ง</h2>
+                                    <p className="text-white/80 text-sm mt-1">ค้างท่า 10-30 วินาที | ทำ 10-15 ครั้ง</p>
                                 </div>
                             </div>
                         </div>
@@ -362,8 +364,8 @@ export default function KnowledgePage() {
                 ) : null}
 
                 {/* Disclaimer */}
-                <div className="mt-6 bg-white/50 backdrop-blur-sm rounded-2xl p-4 border border-white/60">
-                    <p className="text-xs text-gray-500 text-center leading-relaxed">
+                <div className="mt-6 bg-white/50 backdrop-blur-sm rounded-2xl p-5 border border-white/60">
+                    <p className="text-sm text-gray-500 text-center leading-relaxed">
                         📋 ข้อมูลทั้งหมดอ้างอิงจากสถาบันการแพทย์และองค์กรวิทยาศาสตร์การกีฬาชั้นนำ
                         <br />
                         กรุณาปรึกษาแพทย์หรือนักกายภาพบำบัดก่อนเริ่มโปรแกรมออกกำลังกาย

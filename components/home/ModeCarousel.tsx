@@ -71,7 +71,7 @@ export default function ModeCarousel({
                     className="relative z-10 flex items-center gap-3 bg-gradient-to-br from-[#6BC784] to-[#459E60] hover:from-[#76DC91] hover:to-[#4DB26C] text-white font-extrabold py-2.5 md:py-3 px-8 md:px-10 rounded-full shadow-[0_4px_10px_rgba(0,0,0,0.2)] border-2 border-white active:scale-95 transition-all group overflow-hidden"
                 >
                     <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:animate-shimmer"></div>
-                    
+
                     {/* Play Icon Circle */}
                     <div className="bg-white rounded-full p-1 shadow-inner flex items-center justify-center">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 md:w-6 md:h-6 text-[#58B372] ml-0.5">
