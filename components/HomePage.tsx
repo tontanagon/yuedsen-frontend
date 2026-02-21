@@ -6,6 +6,7 @@ import LoadingScreen from './home/LoadingScreen';
 import Header from './home/Header';
 import ModeCarousel from './home/ModeCarousel';
 import NavItem from './home/NavItem';
+import { apiClient } from '@/lib/api-client';
 
 const HomePage = () => {
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -14,29 +15,44 @@ const HomePage = () => {
     const [isLoading, setIsLoading] = useState(true);
     const currentMode = modes[currentIndex];
 
-    // Load saved date from localStorage on mount
+    // Load user progress from API on mount
     useEffect(() => {
-        const timer = setTimeout(() => {
-            const storedDate = localStorage.getItem('user_current_date');
-            if (storedDate) {
-                setSavedDate(parseInt(storedDate, 10));
-            } else {
-                localStorage.setItem('user_current_date', '1');
+        let isMounted = true;
+
+        const fetchProgress = async () => {
+            try {
+                // Fetch the game plan data which contains the user's progress
+                const data = await apiClient.get('/game/plan');
+                if (isMounted && data && data.process) {
+                    const progress = data.process.progress || 1;
+                    setCurrentDay(progress);
+                    setSavedDate(progress);
+                    localStorage.setItem('user_current_date', progress.toString());
+                }
+            } catch (error) {
+                console.error("Failed to fetch user progress:", error);
+                
+                // Fallback to local storage if API fails
+                const storedDate = localStorage.getItem('user_current_date');
+                if (storedDate) {
+                    const dateVal = parseInt(storedDate, 10);
+                    setSavedDate(dateVal);
+                    setCurrentDay(dateVal);
+                } else {
+                    setSavedDate(1);
+                    setCurrentDay(1);
+                }
+            } finally {
+                if (isMounted) {
+                    setIsLoading(false);
+                }
             }
+        };
 
-            // Mockup API call to get user progress
-            // TODO: แทนที่ด้วย API จริง
-            const mockupProgress = async () => {
-                // Simulate API call - ใช้ค่า 24 เพื่อทดสอบ
-                const progress = 24; // ตั้งค่าเป็น 24 เพื่อทดสอบรูปที่ 4
-                setCurrentDay(progress);
-            };
+        // Delay minimalistically if needed or just fetch directly
+        fetchProgress();
 
-            mockupProgress();
-            setIsLoading(false);
-        }, 1000);
-
-        return () => clearTimeout(timer);
+        return () => { isMounted = false; };
     }, []);
 
     const nextMode = () => {

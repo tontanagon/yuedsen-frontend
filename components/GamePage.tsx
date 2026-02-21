@@ -3,6 +3,7 @@
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import Webcam from 'react-webcam';
+import { apiClient } from "@/lib/api-client";
 
 // Types for dynamically loaded modules
 type CameraType = any;
@@ -30,6 +31,9 @@ interface PoseData {
 
     // We can also have multiple conditions parsed from JSON
     conditions?: PoseConditionRule[];
+    
+    // Target accuracy from Plan
+    pose_accuracy?: number;
 }
 
 const MOCK_POSE: PoseData = {
@@ -78,10 +82,50 @@ const GamePage = () => {
     const webcamRef = useRef<Webcam>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [accuracy, setAccuracy] = useState<number>(0);
-    const [currentPose, setCurrentPose] = useState<PoseData>(MOCK_POSE); // Use Mock Data
+    const [currentPose, setCurrentPose] = useState<PoseData | null>(null);
     const [isRunning, setIsRunning] = useState<boolean>(true);
+    const [timeLeft, setTimeLeft] = useState<number>(0);
+    const [processData, setProcessData] = useState<any>(null);
+    const [feedbackUI, setFeedbackUI] = useState<string>("");
+    
+    // Multiple plan states
+    const [allPlans, setAllPlans] = useState<any[]>([]);
+    const [currentPlanIndex, setCurrentPlanIndex] = useState<number>(0);
+    const [showTransition, setShowTransition] = useState<boolean>(false);
+    const [transitionCountdown, setTransitionCountdown] = useState<number>(5);
+    const [isDayCompleted, setIsDayCompleted] = useState<boolean>(false);
+    const [isBlockedToday, setIsBlockedToday] = useState<boolean>(false);
     
     const cameraRef = useRef<CameraType | null>(null);
+    const feedbackRef = useRef<string>("");
+    const accuracyRef = useRef<number>(0);
+
+    const loadPlan = useCallback((plan: any) => {
+        const dbPose = plan.pose;
+        setCurrentPose({
+            id: dbPose.id,
+            pose_name: dbPose.pose_name,
+            pose_description: dbPose.pose_description,
+            pose_condition: dbPose.pose_condition,
+            pose_point: dbPose.pose_point,
+            pose_min: plan.pose_min,
+            pose_max: plan.pose_max,
+            pose_accuracy: plan.pose_accuracy,
+        });
+        setTimeLeft(plan.duration);
+        setAccuracy(0);
+        accuracyRef.current = 0;
+        setFeedbackUI("");
+        feedbackRef.current = "";
+    }, []);
+
+    const updateFeedbackUI = useCallback((text: string) => {
+        // อัปเดต UI ให้ตรงกับ text ถ้ามันเปลี่ยนไป
+        if (text !== feedbackRef.current) {
+            feedbackRef.current = text;
+            setFeedbackUI(text);
+        }
+    }, []);
 
     // Function to calculate angle between three points (A, B, C)
     const calculateAngle = (a: any, b: any, c: any) => {
@@ -94,12 +138,13 @@ const GamePage = () => {
 
     // Calculate pose accuracy logic
     const calculateAccuracy = useCallback((landmarks: any[]) => {
-        if (!landmarks || landmarks.length === 0) return 0;
+        if (!landmarks || landmarks.length === 0 || !currentPose) return { score: 0, feedback: "" };
 
         // 1. Dynamic Check based on `conditions` if available
         if (currentPose.conditions && currentPose.conditions.length > 0) {
             let totalScore = 0;
             let totalWeight = 0;
+            let currentFeedback = "";
 
             currentPose.conditions.forEach(rule => {
                 const p1 = landmarks[rule.points[0]];
@@ -114,13 +159,20 @@ const GamePage = () => {
                         score = 100;
                     } else {
                         // Calculate deviation range
-                        // Distance to nearest valid boundary
                         const distMin = Math.abs(angle - rule.min);
                         const distMax = Math.abs(angle - rule.max);
                         const deviation = Math.min(distMin, distMax);
                         
-                        // Penalty: lose 2 points per degree of deviation (adjustable)
                         score = Math.max(0, 100 - (deviation * 2));
+
+                        // ให้คำแนะนำจากจุดแรกที่ผิดพลาด
+                        if (!currentFeedback) { 
+                            if (angle < rule.min) {
+                                currentFeedback = `กรุณากางขยับหรือเพิ่มมุม ${rule.name} ขึ้นอีกนิดค่ะ`;
+                            } else {
+                                currentFeedback = `กรุณาหดหรือปรับมุม ${rule.name} ลงอีกนิดค่ะ`;
+                            }
+                        }
                     }
 
                     const weight = rule.weight || 1;
@@ -129,7 +181,9 @@ const GamePage = () => {
                 }
             });
 
-            return totalWeight > 0 ? totalScore / totalWeight : 0;
+            const finalScore = totalWeight > 0 ? totalScore / totalWeight : 0;
+            const threshold = currentPose.pose_accuracy || 80;
+            return { score: finalScore, feedback: finalScore < threshold ? currentFeedback : "" };
         }
 
         // 2. Fallback to Simple Single Point Check (from DB columns)
@@ -146,9 +200,17 @@ const GamePage = () => {
                          const min = currentPose.pose_min || 0;
                          const max = currentPose.pose_max || 180;
                          
-                         if (angle >= min && angle <= max) return 100;
+                         if (angle >= min && angle <= max) return { score: 100, feedback: "" };
+                         
                          const deviation = Math.min(Math.abs(angle - min), Math.abs(angle - max));
-                         return Math.max(0, 100 - (deviation * 2));
+                         const score = Math.max(0, 100 - (deviation * 2));
+                         
+                         let feedback = "";
+                         if (angle < min) feedback = "กรุณากางข้อต่อ หรือเพิ่มองศาขึ้นอีกนิดนะคะ";
+                         if (angle > max) feedback = "กรุณาหุบข้อต่อ หรือลดองศาลงอีกนิดนะคะ";
+                         
+                         const threshold = currentPose.pose_accuracy || 80;
+                         return { score, feedback: score < threshold ? feedback : "" };
                      }
                 }
             } catch (e) {
@@ -156,8 +218,97 @@ const GamePage = () => {
             }
         }
 
-        return 0;
+        return { score: 0, feedback: "ไม่พบจุดระบุตำแหน่งในพื้นที่กล้อง" };
     }, [currentPose]);
+
+    // Fetch Game Plan from Database
+    useEffect(() => {
+        let isMounted = true;
+        const fetchGamePlan = async () => {
+            try {
+                const data = await apiClient.get('/game/plan');
+                if (isMounted && data) {
+                    setProcessData(data.process);
+                    
+                    if (data.is_blocked) {
+                        setIsBlockedToday(true);
+                        return; // Stop loading if they are blocked
+                    }
+                    
+                    if (data.plans && data.plans.length > 0) {
+                        setAllPlans(data.plans);
+                        setCurrentPlanIndex(0);
+                        loadPlan(data.plans[0]);
+                    } else {
+                        // Fallback to MOCK_POSE if no plans found
+                        setCurrentPose(MOCK_POSE);
+                        setTimeLeft(60); 
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to fetch game plan:", error);
+                if (isMounted) {
+                    setCurrentPose(MOCK_POSE); // Fallback
+                    setTimeLeft(60);
+                }
+            }
+        };
+
+        fetchGamePlan();
+
+        return () => { isMounted = false; };
+    }, [loadPlan]);
+
+    // Timer Logic
+    useEffect(() => {
+        if (!isRunning || !currentPose || showTransition || isDayCompleted) return;
+        
+        const threshold = currentPose.pose_accuracy || 80;
+        
+        const timerId = setInterval(() => {
+            setTimeLeft(prev => {
+                if (prev <= 0) return 0;
+                if (accuracyRef.current >= threshold) {
+                    return prev - 1;
+                }
+                return prev;
+            });
+        }, 1000);
+        
+        return () => clearInterval(timerId);
+    }, [isRunning, currentPose, showTransition, isDayCompleted]);
+
+    // Track Time reaching 0 -> Transition
+    useEffect(() => {
+        if (timeLeft === 0 && isRunning && currentPose && !showTransition && !isDayCompleted) {
+            // หมดเวลา ท่าปัจจุบันสำเร็จ
+            const nextIndex = currentPlanIndex + 1;
+            if (nextIndex < allPlans.length) {
+                setShowTransition(true);
+                setTransitionCountdown(5); // วินาทีนับถอยหลังไปท่าต่อไป
+            } else {
+                setIsDayCompleted(true);
+                // Call API to complete the day and update userprogress
+                apiClient.post('/game/complete', {}).catch(e => console.error("Failed to complete day", e));
+            }
+        }
+    }, [timeLeft, isRunning, showTransition, isDayCompleted, currentPose, currentPlanIndex, allPlans]);
+
+    // Handle Transition Countdown
+    useEffect(() => {
+        if (showTransition && transitionCountdown > 0) {
+            const timerId = setInterval(() => {
+                setTransitionCountdown(prev => prev - 1);
+            }, 1000);
+            return () => clearInterval(timerId);
+        } else if (showTransition && transitionCountdown === 0) {
+            // นับครบแล้ว เปลี่ยนไปท่าถัดไป
+            setShowTransition(false);
+            const nextIndex = currentPlanIndex + 1;
+            setCurrentPlanIndex(nextIndex);
+            loadPlan(allPlans[nextIndex]);
+        }
+    }, [showTransition, transitionCountdown, currentPlanIndex, allPlans, loadPlan]);
 
     useEffect(() => {
         let camera: CameraType | null = null;
@@ -211,9 +362,12 @@ const GamePage = () => {
                     drawLandmarks(canvasCtx, results.poseLandmarks,
                         { color: '#FF0000', lineWidth: 2 });
 
-                    // Calculate accuracy
-                    const currentAccuracy = calculateAccuracy(results.poseLandmarks);
-                    setAccuracy(Math.round(currentAccuracy));
+                    // Calculate accuracy and feedback
+                    const { score, feedback } = calculateAccuracy(results.poseLandmarks);
+                    const roundedScore = Math.round(score);
+                    setAccuracy(roundedScore);
+                    accuracyRef.current = roundedScore;
+                    updateFeedbackUI(feedback);
                 }
                 canvasCtx.restore();
             });
@@ -248,10 +402,69 @@ const GamePage = () => {
     const handleReset = () => {
         setIsRunning(true);
         setAccuracy(0);
+        // Reset timer depending on logic, optionally refetch
     };
 
+    if (isBlockedToday) {
+        return (
+            <div className="min-h-screen bg-blue-100 flex flex-col items-center justify-center p-8 text-center relative overflow-hidden">
+                <div className="absolute top-10 left-10 text-9xl opacity-20 transform -rotate-12">🧘</div>
+                <div className="absolute bottom-10 right-10 text-9xl opacity-20 transform rotate-12">☀️</div>
+                <div className="bg-white/80 backdrop-blur-md p-10 rounded-3xl shadow-xl z-10 max-w-lg border-2 border-white/50">
+                    <div className="text-8xl mb-6">✅</div>
+                    <h1 className="text-3xl font-extrabold text-blue-800 mb-4">เยี่ยมมาก! สำหรับวันนี้</h1>
+                    <p className="text-xl text-gray-700 font-medium mb-8 leading-relaxed">
+                        คุณได้ทำภารกิจฝึกฝนของวันนี้เสร็จสิ้นเป็นที่เรียบร้อยแล้ว ร่างกายต้องการการพักผ่อน 
+                        กลับมาฝึกต่อใหม่อีกครั้งในวันพรุ่งนี้นะครับ!
+                    </p>
+                    <button 
+                        onClick={() => window.location.href = '/'} 
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-10 rounded-full shadow-lg transition-transform transform hover:scale-105"
+                    >
+                        กลับสู่หน้าหลัก
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (!currentPose && !isDayCompleted) {
+        return <div className="min-h-screen bg-blue-100 flex items-center justify-center font-bold text-xl text-blue-800">กำลังเตรียมข้อมูลการฝึก... (Loading...)</div>;
+    }
+
     return (
-        <div className="min-h-screen bg-blue-100 flex flex-col items-center">
+        <div className="min-h-screen bg-blue-100 flex flex-col items-center relative">
+            
+            {/* Day Completed Popup */}
+            {isDayCompleted && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white p-10 rounded-3xl shadow-2xl text-center">
+                        <div className="text-8xl mb-4">🎉</div>
+                        <h2 className="text-3xl font-extrabold text-green-600 mb-2">ยินดีด้วย!</h2>
+                        <p className="text-xl text-gray-700 font-bold">คุณออกกำลังกายทั้งหมดของวันนี้เสร็จสิ้นแล้ว</p>
+                        <button 
+                            onClick={() => window.location.href = '/'} 
+                            className="mt-8 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-full shadow-lg"
+                        >
+                            กลับไปหน้าหลัก
+                        </button>
+                    </div>
+                </div>
+            )}
+            
+            {/* Transition Popup */}
+            {showTransition && !isDayCompleted && (
+                <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+                    <div className="bg-white p-10 rounded-3xl shadow-2xl text-center max-w-sm">
+                        <h2 className="text-3xl font-extrabold text-blue-600 mb-4">เยี่ยมมาก! ท่าสำเร็จ ✅</h2>
+                        <p className="text-gray-600 text-lg mb-6">เตรียมตัวท่าถัดไปในอีก...</p>
+                        <div className="text-7xl font-bold font-mono text-orange-500">
+                            {transitionCountdown}
+                        </div>
+                    </div>
+                </div>
+            )}
+            
             {/* Top Bar with Controls and Stats */}
             <div className="w-full bg-white shadow p-4 flex justify-between items-center z-20">
                 <div className="flex gap-4">
@@ -271,11 +484,14 @@ const GamePage = () => {
                 
                 <div className="text-center">
                      <h1 className="text-xl md:text-2xl font-bold text-gray-800">ชื่อท่า: {currentPose.pose_name}</h1>
-                     <p className="text-gray-600 font-medium">ทำได้: <span className="text-3xl font-bold text-blue-600">{accuracy}%</span></p>
+                     <p className="text-gray-600 font-medium">ความถูกต้อง: <span className="text-3xl font-bold text-blue-600">{accuracy}%</span></p>
                 </div>
 
-                {/* Placeholder for layout balance */}
-                <div className="w-32"></div>
+                {/* Right text: Timer & Progress */}
+                <div className="text-right text-gray-800 min-w-[120px]">
+                     <div className="text-lg font-bold text-orange-600">เวลา: {timeLeft} วิ</div>
+                     {processData && <div className="text-sm font-semibold">วันที่ {processData.progress} / 30</div>}
+                </div>
             </div>
 
             {/* Main Content Area */}
@@ -299,10 +515,15 @@ const GamePage = () => {
                         ผู้เล่น (Player)
                     </div>
                      {/* Feedback Overlay based on Accuracy */}
-                    {accuracy > 80 && (
+                    {accuracy >= (currentPose?.pose_accuracy || 80) && (
                         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-6 py-2 rounded-full font-bold animate-bounce shadow-lg">
                             เยี่ยมมาก! ถูกต้อง ✅
                         </div>
+                    )}
+                    {accuracy < (currentPose?.pose_accuracy || 80) && feedbackUI && (
+                         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-6 py-2 rounded-full font-bold shadow-lg whitespace-nowrap">
+                             ⚠️ {feedbackUI}
+                         </div>
                     )}
                 </div>
 

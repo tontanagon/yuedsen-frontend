@@ -38,7 +38,7 @@ export async function middleware(request: NextRequest) {
 
     if (!sessionCookie?.value) {
         // ไม่มี session → redirect ไปหน้าหลัก
-        const homeUrl = new URL("/", request.url);
+        const homeUrl = new URL("/login", request.url);
         return NextResponse.redirect(homeUrl);
     }
 

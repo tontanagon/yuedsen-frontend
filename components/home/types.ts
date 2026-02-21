@@ -29,10 +29,10 @@ export const modes: ModeConfig[] = [
         title: "รักษา",
         icon: "🩹",
         imageOverride: [
-            "/images/image_0.png",
-            "/images/image_2.png",
-            "/images/image_3.png",
-            "/images/image_4.png"
+            "/images/process/image_0.png",
+            "/images/process/image_1.png",
+            "/images/process/image_2.png",
+            "/images/process/image_3.png"
         ],
         colorTheme: "green",
         bgColor: "bg-transparent",
@@ -44,10 +44,10 @@ export const modes: ModeConfig[] = [
         title: "ป้องกัน",
         icon: "🛡️",
         imageOverride: [
-            "/images/image_0.png",
-            "/images/image_2.png",
-            "/images/image_3.png",
-            "/images/image_4.png"
+            "/images/process/image_0.png",
+            "/images/process/image_1.png",
+            "/images/process/image_2.png",
+            "/images/process/image_3.png"
         ],
         colorTheme: "green",
         bgColor: "bg-transparent",
@@ -59,10 +59,10 @@ export const modes: ModeConfig[] = [
         title: "เสริมบุคลิกภาพ",
         icon: "🧘",
         imageOverride: [
-            "/images/image_0.png",
-            "/images/image_2.png",
-            "/images/image_3.png",
-            "/images/image_4.png"
+            "/images/process/image_0.png",
+            "/images/process/image_1.png",
+            "/images/process/image_2.png",
+            "/images/process/image_3.png"
         ],
         colorTheme: "green",
         bgColor: "bg-transparent",
