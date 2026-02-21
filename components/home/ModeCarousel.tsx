@@ -67,7 +67,7 @@ export default function ModeCarousel({
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 md:w-80 h-16 md:h-20 bg-white/50 backdrop-blur-sm rounded-[100px] border border-white/60"></div>
 
                 <button
-                    onClick={() => window.location.href = '/game'}
+                    onClick={() => window.location.href = `/game?category_id=${currentMode.id + 1}`}
                     className="relative z-10 flex items-center gap-3 bg-gradient-to-br from-[#6BC784] to-[#459E60] hover:from-[#76DC91] hover:to-[#4DB26C] text-white font-extrabold py-2.5 md:py-3 px-8 md:px-10 rounded-full shadow-[0_4px_10px_rgba(0,0,0,0.2)] border-2 border-white active:scale-95 transition-all group overflow-hidden"
                 >
                     <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:animate-shimmer"></div>

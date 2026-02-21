@@ -11,7 +11,7 @@ import { apiClient } from '@/lib/api-client';
 const HomePage = () => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [savedDate, setSavedDate] = useState<number>(1);
-    const [currentDay, setCurrentDay] = useState<number>(24); // เปลี่ยนเป็นวันที่ 24 เพื่อทดสอบ
+    const [currentDay, setCurrentDay] = useState<number>(1);
     const [isLoading, setIsLoading] = useState(true);
     const currentMode = modes[currentIndex];
 
@@ -21,8 +21,11 @@ const HomePage = () => {
 
         const fetchProgress = async () => {
             try {
-                // Fetch the game plan data which contains the user's progress
-                const data = await apiClient.get('/game/plan');
+                const token = apiClient.getToken();
+                if (!token) throw new Error("No token found");
+
+                // Fetch the game plan data which contains the user's progress for this specific category
+                const data = await apiClient.get(`/game/plan?category_id=${currentMode.id + 1}`);
                 if (isMounted && data && data.process) {
                     const progress = data.process.progress || 1;
                     setCurrentDay(progress);
@@ -53,7 +56,7 @@ const HomePage = () => {
         fetchProgress();
 
         return () => { isMounted = false; };
-    }, []);
+    }, [currentMode.id]);
 
     const nextMode = () => {
         setCurrentIndex((prev) => (prev + 1) % modes.length);
