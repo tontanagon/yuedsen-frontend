@@ -36,11 +36,11 @@ export async function middleware(request: NextRequest) {
         request.cookies.get("better-auth.session_token") ??
         request.cookies.get("__Secure-better-auth.session_token");
 
-    if (!sessionCookie?.value) {
-        // ไม่มี session → redirect ไปหน้าหลัก
-        const homeUrl = new URL("/login", request.url);
-        return NextResponse.redirect(homeUrl);
-    }
+    // if (!sessionCookie?.value) {
+    //     // ไม่มี session → redirect ไปหน้าหลัก
+    //     const homeUrl = new URL("/login", request.url);
+    //     return NextResponse.redirect(homeUrl);
+    // }
 
     return NextResponse.next();
 }

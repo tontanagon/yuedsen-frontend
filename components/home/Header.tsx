@@ -32,8 +32,9 @@ export default function Header({ currentMode }: HeaderProps) {
                 <h1
                     className="text-3xl md:text-5xl font-black text-white tracking-widest"
                     style={{
-                        textShadow: '0 4px 6px rgba(0,0,0,0.1), -2px -2px 0 #58B372, 2px -2px 0 #58B372, -2px 2px 0 #58B372, 2px 2px 0 #58B372, 0 3px 0 #459E60',
-                        WebkitTextStroke: '2px #58B372'
+                        textShadow: `0 4px 6px rgba(0,0,0,0.1), -2px -2px 0 ${currentMode.strokeColor}, 2px -2px 0 ${currentMode.strokeColor}, -2px 2px 0 ${currentMode.strokeColor}, 2px 2px 0 ${currentMode.strokeColor}, 0 3px 0 ${currentMode.strokeColor}`,
+                        WebkitTextStroke: `2px ${currentMode.strokeColor}`,
+                        transition: 'text-shadow 0.5s ease, -webkit-text-stroke 0.5s ease',
                     }}
                 >
                     YUEDSEN
@@ -42,7 +43,7 @@ export default function Header({ currentMode }: HeaderProps) {
                     <p
                         key={currentMode.title}
                         className="text-xl md:text-2xl font-semibold animate-slide-up tracking-wide"
-                        style={{ color: '#58B372' }}
+                        style={{ color: currentMode.themeColor, transition: 'color 0.5s ease' }}
                     >
                         {currentMode.title}
                     </p>

@@ -6,9 +6,10 @@ interface NavItemProps {
     color: string;
     size?: 'normal' | 'large';
     href?: string;
+    labelColor?: string; // สีของ label text (optional, default เขียว)
 }
 
-export default function NavItem({ icon, label, color, size = 'normal', href }: NavItemProps) {
+export default function NavItem({ icon, label, color, size = 'normal', href, labelColor = '#2A6546' }: NavItemProps) {
     const isLarge = size === 'large';
     const sizeClasses = isLarge ? "w-14 h-14 md:w-16 md:h-16" : "w-12 h-12 md:w-14 md:h-14";
     const iconSize = isLarge ? "text-2xl md:text-3xl" : "text-xl md:text-2xl";
@@ -34,7 +35,12 @@ export default function NavItem({ icon, label, color, size = 'normal', href }: N
                     )}
                 </span>
             </div>
-            <span className="font-bold text-[#2A6546] text-xs md:text-sm mt-1">{label}</span>
+            <span
+                className="font-bold text-xs md:text-sm mt-1"
+                style={{ color: labelColor, transition: 'color 0.5s ease' }}
+            >
+                {label}
+            </span>
         </div>
     );
 

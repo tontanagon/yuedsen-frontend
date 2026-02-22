@@ -276,7 +276,7 @@ export default function KnowledgePage() {
     return (
         <div
             className="min-h-screen flex flex-col font-sans overflow-hidden relative bg-cover bg-center bg-no-repeat"
-            style={{ backgroundImage: "url('/images/background_home.png')" }}
+            style={{ backgroundImage: "url('/images/background_home_heal.png')" }}
         >
             {/* Header */}
             <div className="flex items-center gap-3 px-5 pt-10 pb-4">
