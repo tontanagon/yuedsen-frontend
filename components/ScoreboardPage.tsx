@@ -24,13 +24,12 @@ interface UserRow {
 }
 
 // ── config ตาม category ──
-const CATEGORY_CONFIG: Record<string, { icon: string; gradient: string; light: string; text: string; border: string }> = {
-    รักษา:           { icon: "🩹", gradient: "from-[#7BC69A] to-[#459E60]", light: "bg-emerald-50",  text: "text-emerald-700", border: "border-emerald-200" },
-    ป้องกัน:          { icon: "🛡️", gradient: "from-[#60A5FA] to-[#2563EB]", light: "bg-blue-50",    text: "text-blue-700",   border: "border-blue-200"   },
-    เสริมบุคลิกภาพ:   { icon: "🧘", gradient: "from-[#FBBF24] to-[#D97706]", light: "bg-amber-50",   text: "text-amber-700",  border: "border-amber-200"  },
+const CATEGORY_CONFIG: Record<string, { icon: string; gradient: string; light: string; text: string; border: string; maxDays: number }> = {
+    รักษา:           { icon: "🩹", gradient: "from-[#7BC69A] to-[#459E60]", light: "bg-emerald-50",  text: "text-emerald-700", border: "border-emerald-200", maxDays: 30 },
+    ป้องกัน:          { icon: "🛡️", gradient: "from-[#60A5FA] to-[#2563EB]", light: "bg-blue-50",    text: "text-blue-700",   border: "border-blue-200", maxDays: 10   },
+    เสริมบุคลิกภาพ:   { icon: "🧘", gradient: "from-[#FBBF24] to-[#D97706]", light: "bg-amber-50",   text: "text-amber-700",  border: "border-amber-200", maxDays: 10  },
 };
 
-const MAX_DAYS = 30;
 
 function getRankDisplay(idx: number) {
     if (idx === 0) return { emoji: "🥇", bg: "bg-yellow-100", text: "text-yellow-700" };
@@ -221,8 +220,8 @@ export default function ScoreboardPage() {
                             <div className="flex flex-col gap-2">
                                 {(activeTab === "all" ? allCategories : [activeTab]).map((catName) => {
                                     const catData = user.categories[catName];
-                                    const cfg = CATEGORY_CONFIG[catName] ?? { icon: "🎯", gradient: "from-gray-400 to-gray-500", light: "bg-gray-50", text: "text-gray-600", border: "border-gray-200" };
-                                    const pct = catData ? Math.min((catData.progress / MAX_DAYS) * 100, 100) : 0;
+                                    const cfg = CATEGORY_CONFIG[catName] ?? { icon: "🎯", gradient: "from-gray-400 to-gray-500", light: "bg-gray-50", text: "text-gray-600", border: "border-gray-200", maxDays: 30 };
+                                    const pct = catData ? Math.min((catData.progress / cfg.maxDays) * 100, 100) : 0;
 
                                     return (
                                         <div key={catName} className={`${cfg.light} ${cfg.border} border rounded-xl px-4 py-3`}>
@@ -241,7 +240,7 @@ export default function ScoreboardPage() {
                                                                 {catData.status === "completed" ? "✅ เสร็จแล้ว" : "⏳ กำลังเล่น"}
                                                             </span>
                                                             <span className={`text-sm font-bold ${cfg.text}`}>
-                                                                Day {catData.progress}/{MAX_DAYS}
+                                                                Day {catData.progress}/{cfg.maxDays}
                                                             </span>
                                                         </>
                                                     ) : (

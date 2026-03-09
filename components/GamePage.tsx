@@ -4,6 +4,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import Webcam from 'react-webcam';
 import { apiClient } from "@/lib/api-client";
+import { getAccuracyMode, type AccuracyMode } from './home/SettingsModal';
 
 type CameraType = any;
 type ResultsType = any;
@@ -14,6 +15,14 @@ interface PoseConditionRule {
     min: number;
     max: number;
     weight?: number;
+}
+
+interface PoseLandmarkData {
+    landmark_index: number;
+    x: number;
+    y: number;
+    z: number;
+    visibility: number;
 }
 
 interface PoseData {
@@ -27,6 +36,7 @@ interface PoseData {
     pose_max?: number;
     conditions?: PoseConditionRule[];
     pose_accuracy?: number;
+    landmarks?: PoseLandmarkData[];
 }
 
 const MOCK_POSE: PoseData = {
@@ -43,6 +53,8 @@ const MOCK_POSE: PoseData = {
     ]
 };
 
+const TOTAL_SETS = 3;
+
 const GamePage = () => {
     const webcamRef = useRef<Webcam>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -52,10 +64,13 @@ const GamePage = () => {
     const [timeLeft, setTimeLeft] = useState<number>(0);
     const [processData, setProcessData] = useState<any>(null);
     const [feedbackUI, setFeedbackUI] = useState<string>("");
+    const [accuracyMode, setAccuracyModeState] = useState<AccuracyMode>('angle');
 
     const [allPlans, setAllPlans] = useState<any[]>([]);
     const [currentPlanIndex, setCurrentPlanIndex] = useState<number>(0);
+    const [currentSet, setCurrentSet] = useState<number>(1);         // ← Set ปัจจุบัน (1–3)
     const [showTransition, setShowTransition] = useState<boolean>(false);
+    const [transitionType, setTransitionType] = useState<'pose' | 'set'>('pose'); // ← ประเภท overlay
     const [transitionCountdown, setTransitionCountdown] = useState<number>(3);
     const [isDayCompleted, setIsDayCompleted] = useState<boolean>(false);
     const [isBlockedToday, setIsBlockedToday] = useState<boolean>(false);
@@ -78,6 +93,7 @@ const GamePage = () => {
             pose_min: plan.pose_min,
             pose_max: plan.pose_max,
             pose_accuracy: plan.pose_accuracy,
+            landmarks: dbPose.landmarks || [],
         });
         setTimeLeft(plan.duration);
         setAccuracy(0);
@@ -101,9 +117,131 @@ const GamePage = () => {
         return angle;
     };
 
+    // ── Landmark-based comparison (position mode) ──────────
+    const calculateLandmarkAccuracy = useCallback((detectedLandmarks: any[]) => {
+        if (!currentPose || !currentPose.landmarks || currentPose.landmarks.length === 0) {
+            return { score: 0, feedback: "ไม่มีข้อมูล landmark สำหรับท่านี้" };
+        }
+
+        const refLandmarks = currentPose.landmarks;
+
+        // ── Build normalization anchors (flexible) ──
+        // Try shoulders (11,12) → hips (23,24) → centroid of all ref landmarks
+        // Reference data is stored in raw camera (mirrored) coordinates.
+        let anchorIndices: number[] = [];
+
+        const findAnchorPair = (
+            refList: PoseLandmarkData[],
+            detList: any[],
+            idxA: number,
+            idxB: number
+        ): { refCX: number; refCY: number; refS: number; detCX: number; detCY: number; detS: number } | null => {
+            const rA = refList.find(l => l.landmark_index === idxA);
+            const rB = refList.find(l => l.landmark_index === idxB);
+            const dA = detList[idxA];
+            const dB = detList[idxB];
+            if (!rA || !rB) return null;
+            if (!dA || !dB) return null;
+            if ((dA.visibility && dA.visibility < 0.5) || (dB.visibility && dB.visibility < 0.5)) return null;
+            const refS = Math.sqrt(Math.pow(rA.x - rB.x, 2) + Math.pow(rA.y - rB.y, 2));
+            const detS = Math.sqrt(Math.pow(dA.x - dB.x, 2) + Math.pow(dA.y - dB.y, 2));
+            if (refS < 0.01 || detS < 0.01) return null;
+            anchorIndices = [idxA, idxB];
+            return {
+                refCX: (rA.x + rB.x) / 2, refCY: (rA.y + rB.y) / 2, refS,
+                detCX: (dA.x + dB.x) / 2, detCY: (dA.y + dB.y) / 2, detS,
+            };
+        };
+
+        // Try anchor pairs in order of preference
+        let anchor = findAnchorPair(refLandmarks, detectedLandmarks, 11, 12); // shoulders
+        if (!anchor) anchor = findAnchorPair(refLandmarks, detectedLandmarks, 23, 24); // hips
+
+        // Fallback: use centroid & spread of all matched landmarks
+        if (!anchor) {
+            let rSumX = 0, rSumY = 0, dSumX = 0, dSumY = 0, cnt = 0;
+            for (const ref of refLandmarks) {
+                const det = detectedLandmarks[ref.landmark_index];
+                if (!det || (det.visibility && det.visibility < 0.5)) continue;
+                rSumX += ref.x; rSumY += ref.y;
+                dSumX += det.x; dSumY += det.y;
+                cnt++;
+            }
+            if (cnt < 2) return { score: 0, feedback: "⚠️ ไม่พบจุดอ้างอิงเพียงพอ กรุณาขยับให้เห็นลำตัวในกล้องค่ะ" };
+            const refCX = rSumX / cnt, refCY = rSumY / cnt;
+            const detCX = dSumX / cnt, detCY = dSumY / cnt;
+            let rSpread = 0, dSpread = 0;
+            for (const ref of refLandmarks) {
+                const det = detectedLandmarks[ref.landmark_index];
+                if (!det || (det.visibility && det.visibility < 0.5)) continue;
+                rSpread += Math.sqrt(Math.pow(ref.x - refCX, 2) + Math.pow(ref.y - refCY, 2));
+                dSpread += Math.sqrt(Math.pow(det.x - detCX, 2) + Math.pow(det.y - detCY, 2));
+            }
+            const refS = rSpread / cnt || 0.1;
+            const detS = dSpread / cnt || 0.1;
+            anchor = { refCX, refCY, refS, detCX, detCY, detS };
+        }
+
+        const { refCX, refCY, refS, detCX, detCY, detS } = anchor;
+
+        // Compare each reference landmark against detected
+        // Skip anchor landmarks (they always normalize to origin → 100% free score)
+        let totalScore = 0;
+        let matchedCount = 0;
+        const tolerance = 0.35;
+
+        for (const ref of refLandmarks) {
+            // Skip anchor indices — they always match perfectly after normalization
+            if (anchorIndices.includes(ref.landmark_index)) continue;
+
+            const det = detectedLandmarks[ref.landmark_index];
+            if (!det) continue;
+            if (det.visibility && det.visibility < 0.5) continue;
+
+            // Normalize positions relative to anchor center & scale
+            const refNormX = (ref.x - refCX) / refS;
+            const refNormY = (ref.y - refCY) / refS;
+            const detNormX = (det.x - detCX) / detS;
+            const detNormY = (det.y - detCY) / detS;
+
+            const dist = Math.sqrt(Math.pow(refNormX - detNormX, 2) + Math.pow(refNormY - detNormY, 2));
+
+            let pointScore: number;
+            if (dist <= tolerance * 0.5) {
+                pointScore = 100;
+            } else if (dist <= tolerance) {
+                pointScore = 100 - ((dist - tolerance * 0.5) / (tolerance * 0.5)) * 50;
+            } else {
+                pointScore = Math.max(0, 50 - ((dist - tolerance) / tolerance) * 100);
+            }
+
+            totalScore += pointScore;
+            matchedCount++;
+        }
+
+        if (matchedCount === 0) return { score: 0, feedback: "⚠️ ไม่พบจุดที่ตรงกัน กรุณาปรับตำแหน่งค่ะ" };
+
+        const finalScore = totalScore / matchedCount;
+        const threshold = currentPose.pose_accuracy || 80;
+        let feedback = "";
+        if (finalScore < threshold) {
+            feedback = finalScore < 40
+                ? "กรุณาปรับท่าให้ตรงกับตัวอย่างค่ะ"
+                : "เกือบถูกแล้ว ปรับอีกนิดค่ะ";
+        }
+
+        return { score: finalScore, feedback };
+    }, [currentPose]);
+
     const calculateAccuracy = useCallback((landmarks: any[]) => {
         if (!landmarks || landmarks.length === 0 || !currentPose) return { score: 0, feedback: "" };
 
+        // ── Landmark Mode ──
+        if (accuracyMode === 'landmark' && currentPose.landmarks && currentPose.landmarks.length > 0) {
+            return calculateLandmarkAccuracy(landmarks);
+        }
+
+        // ── Angle Mode (original) ──
         if (currentPose.conditions && currentPose.conditions.length > 0) {
             let totalScore = 0, totalWeight = 0, currentFeedback = "";
             currentPose.conditions.forEach(rule => {
@@ -163,7 +301,12 @@ const GamePage = () => {
             } catch (e) { console.error("Error parsing pose_point", e); }
         }
         return { score: 0, feedback: "ไม่พบจุดระบุตำแหน่งในพื้นที่กล้อง" };
-    }, [currentPose]);
+    }, [currentPose, accuracyMode, calculateLandmarkAccuracy]);
+
+    // ── Read accuracy mode from localStorage ──────────────────
+    useEffect(() => {
+        setAccuracyModeState(getAccuracyMode());
+    }, []);
 
     // ── Fetch plan ────────────────────────────────────────────
     useEffect(() => {
@@ -250,18 +393,32 @@ const GamePage = () => {
         if (timeLeft === 0 && isRunning && currentPose && !showTransition && !isDayCompleted) {
             const nextIndex = currentPlanIndex + 1;
             if (nextIndex < allPlans.length) {
-                playDing('pose');   // 🔔 เสียงติ๊ง — จบท่า
+                // ยังมีท่าถัดไปใน set นี้
+                playDing('pose');
+                setTransitionType('pose');
                 setShowTransition(true);
                 setTransitionCountdown(3);
             } else {
-                playDing('day');    // 🔔🔔🔔 เสียงติ๊ง 3 ครั้ง — จบวัน
-                setIsDayCompleted(true);
-                const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
-                const categoryId = parseInt(searchParams.get('category_id') || '1', 10);
-                apiClient.post('/game/complete', { category_id: categoryId }).catch(e => console.error("Failed to complete day", e));
+                // ท่าสุดท้ายของ set — เช็กว่าครบ 3 set หรือยัง
+                const nextSet = currentSet + 1;
+                if (nextSet <= TOTAL_SETS) {
+                    // ยังไม่ครบ 3 set → เริ่ม set ใหม่
+                    playDing('pose');
+                    setTransitionType('set');
+                    setCurrentSet(nextSet);
+                    setShowTransition(true);
+                    setTransitionCountdown(5); // พัก 5 วิ ระหว่าง set
+                } else {
+                    // ครบ 3 set → จบวัน!
+                    playDing('day');
+                    setIsDayCompleted(true);
+                    const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
+                    const categoryId = parseInt(searchParams.get('category_id') || '1', 10);
+                    apiClient.post('/game/complete', { category_id: categoryId }).catch(e => console.error("Failed to complete day", e));
+                }
             }
         }
-    }, [timeLeft, isRunning, showTransition, isDayCompleted, currentPose, currentPlanIndex, allPlans, playDing]);
+    }, [timeLeft, isRunning, showTransition, isDayCompleted, currentPose, currentPlanIndex, allPlans, currentSet, playDing]);
 
     useEffect(() => {
         if (showTransition && transitionCountdown > 0) {
@@ -269,11 +426,18 @@ const GamePage = () => {
             return () => clearInterval(timerId);
         } else if (showTransition && transitionCountdown === 0) {
             setShowTransition(false);
-            const nextIndex = currentPlanIndex + 1;
-            setCurrentPlanIndex(nextIndex);
-            loadPlan(allPlans[nextIndex]);
+            if (transitionType === 'set') {
+                // เริ่ม set ใหม่ → กลับท่าแรก
+                setCurrentPlanIndex(0);
+                loadPlan(allPlans[0]);
+            } else {
+                // ท่าถัดไปใน set เดิม
+                const nextIndex = currentPlanIndex + 1;
+                setCurrentPlanIndex(nextIndex);
+                loadPlan(allPlans[nextIndex]);
+            }
         }
-    }, [showTransition, transitionCountdown, currentPlanIndex, allPlans, loadPlan]);
+    }, [showTransition, transitionCountdown, transitionType, currentPlanIndex, allPlans, loadPlan]);
 
     // ── MediaPipe ─────────────────────────────────────────────
     useEffect(() => {
@@ -424,10 +588,29 @@ const GamePage = () => {
                 <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-md">
                     <div className="bg-white/95 backdrop-blur-md px-14 py-14 rounded-3xl shadow-2xl text-center w-full max-w-lg mx-6 border border-white/80"
                         style={{ animation: "modalAppear 0.4s cubic-bezier(0.16,1,0.3,1) forwards" }}>
-                        <div className="text-8xl mb-5">✅</div>
-                        <h2 className="text-4xl font-extrabold text-emerald-700 mb-3">ท่าสำเร็จ!</h2>
-                        <p className="text-xl text-gray-500 mb-6">เตรียมตัวท่าถัดไปในอีก...</p>
-                        <div className="text-8xl font-bold font-mono text-emerald-600 leading-none">{transitionCountdown}</div>
+                        {transitionType === 'set' ? (
+                            <>
+                                <div className="text-8xl mb-5">💪</div>
+                                <h2 className="text-4xl font-extrabold text-emerald-700 mb-2">Set {currentSet - 1} สำเร็จ!</h2>
+                                <p className="text-lg text-gray-500 mb-1">เหลืออีก {TOTAL_SETS - (currentSet - 1)} set</p>
+                                <div className="flex justify-center gap-2 mb-6">
+                                    {Array.from({ length: TOTAL_SETS }).map((_, i) => (
+                                        <div key={i} className={`w-4 h-4 rounded-full ${
+                                            i < currentSet - 1 ? 'bg-emerald-500' : 'bg-gray-200'
+                                        }`} />
+                                    ))}
+                                </div>
+                                <p className="text-xl text-gray-500 mb-6">พักสักครู่ เริ่ม Set {currentSet} ในอีก...</p>
+                                <div className="text-8xl font-bold font-mono text-emerald-600 leading-none">{transitionCountdown}</div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="text-8xl mb-5">✅</div>
+                                <h2 className="text-4xl font-extrabold text-emerald-700 mb-3">ท่าสำเร็จ!</h2>
+                                <p className="text-xl text-gray-500 mb-6">เตรียมตัวท่าถัดไปในอีก...</p>
+                                <div className="text-8xl font-bold font-mono text-emerald-600 leading-none">{transitionCountdown}</div>
+                            </>
+                        )}
                     </div>
                 </div>
             )}
@@ -449,8 +632,8 @@ const GamePage = () => {
                             {currentPose?.pose_name || "กำลังโหลด..."}
                         </h1>
                         <p className="text-sm text-gray-500 font-medium mt-0.5">
-                            {processData && `วันที่ ${processData.progress} / 30 `}
-                            ท่าที่ {currentPlanIndex + 1}/{allPlans.length || 1}
+                            {processData && `วันที่ ${processData.progress} / 30 · `}
+                            Set {currentSet}/{TOTAL_SETS} · ท่าที่ {currentPlanIndex + 1}/{allPlans.length || 1}
                         </p>
                     </div>
 

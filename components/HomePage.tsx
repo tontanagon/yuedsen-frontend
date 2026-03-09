@@ -7,23 +7,15 @@ import Header from './home/Header';
 import ModeCarousel from './home/ModeCarousel';
 import NavItem from './home/NavItem';
 import { apiClient } from '@/lib/api-client';
+import SettingsModal from './home/SettingsModal';
 
 const HomePage = () => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [savedDate, setSavedDate] = useState<number>(1);
     const [currentDay, setCurrentDay] = useState<number>(1);
     const [isLoading, setIsLoading] = useState(true);
-    const [bgLoaded, setBgLoaded] = useState(false);
+    const [settingsOpen, setSettingsOpen] = useState(false);
     const currentMode = modes[currentIndex];
-
-    // Preload รูป background เมื่อเปลี่ยน mode
-    useEffect(() => {
-        setBgLoaded(false);
-        const img = new window.Image();
-        img.src = currentMode.background;
-        img.onload = () => setBgLoaded(true);
-        img.onerror = () => setBgLoaded(true);
-    }, [currentMode.background]);
 
     // Load user progress from API on mount
     useEffect(() => {
@@ -91,24 +83,30 @@ const HomePage = () => {
     }
 
     return (
-        <div
-            className="min-h-screen flex flex-col items-center justify-between p-4 md:p-6 font-sans text-gray-800 overflow-hidden relative bg-cover bg-center bg-no-repeat"
-            style={{
-                backgroundImage: `url('${currentMode.background}')`,
-            }}
-        >
+        <div className="min-h-screen flex flex-col items-center justify-between p-4 md:p-6 font-sans text-gray-800 overflow-hidden relative">
+            
+            {/* Background Layers for smooth transition */}
+            {modes.map((mode, index) => (
+                <div
+                    key={mode.id}
+                    className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-500 ease-in-out z-[-2]"
+                    style={{
+                        backgroundImage: `url('${mode.background}')`,
+                        opacity: index === currentIndex ? 1 : 0,
+                    }}
+                />
+            ))}
+
             {/* Soft dark overlay ด้านล่างเพื่อให้ nav อ่านง่าย */}
             <div
-                className="absolute inset-0 pointer-events-none z-0"
+                className="absolute inset-0 pointer-events-none z-[-1]"
                 style={{
                     background: 'linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.0) 60%, rgba(0,0,0,0.15) 100%)',
-                    transition: 'opacity 0.5s ease',
-                    opacity: bgLoaded ? 1 : 0,
                 }}
             />
 
             {/* Header Section */}
-            <Header currentMode={currentMode} />
+            <Header currentMode={currentMode} onOpenSettings={() => setSettingsOpen(true)} />
 
             {/* Main Content (Carousel) */}
             <ModeCarousel
@@ -127,12 +125,6 @@ const HomePage = () => {
                 className="backdrop-blur-md rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.1)] border border-white/80 px-10 py-4 mb-4 md:mb-8 z-10 flex justify-center items-center gap-10 md:gap-20"
                 style={{ background: 'rgba(255,255,255,0.72)', transition: 'background 0.5s ease' }}
             >
-                <NavItem
-                    icon="bar_chart"
-                    label="Dashboard"
-                    color="bg-gradient-to-br from-[#53A0DF] to-[#3B80C0]"
-                    labelColor={currentMode.strokeColor}
-                />
                 <NavItem
                     icon="star"
                     label="Score"
@@ -172,6 +164,9 @@ const HomePage = () => {
                     animation: shimmer 1.5s infinite;
                 }
             `}</style>
+
+            {/* Settings Modal — rendered at root level for proper z-index */}
+            <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
         </div>
     );
 };
