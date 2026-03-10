@@ -9,10 +9,11 @@ services:
     environment:
       - NODE_ENV=development
       - WATCHPACK_POLLING=true
-      - BETTER_AUTH_SECRET=please_generate_a_secret_key
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
       - BETTER_AUTH_URL=http://localhost:3000
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - NEXT_PUBLIC_API_URL=http://yuedsen-backend-backend-1:8080
       - NEXT_PUBLIC_APP_URL=http://localhost:3000
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/yuedsen_db
     volumes:

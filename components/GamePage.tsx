@@ -453,7 +453,7 @@ const GamePage = () => {
                 const drawLandmarks = drawingUtils.drawLandmarks;
                 const POSE_CONNECTIONS = poseModule.POSE_CONNECTIONS;
 
-                const pose = new Pose({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}` });
+                const pose = new Pose({ locateFile: (file) => `/mediapipe/pose/${file}` });
                 pose.setOptions({ modelComplexity: 1, smoothLandmarks: true, enableSegmentation: false, smoothSegmentation: false, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
 
                 pose.onResults((results: ResultsType) => {

@@ -31,12 +31,12 @@ export default function Header({ currentMode, onOpenSettings }: HeaderProps) {
     };
 
     return (
-        <div className="w-full h-20 max-w-5xl mt-2 relative z-10 px-4">
+        <div className="w-full h-28 max-w-5xl mt-2 relative z-50 px-4">
 
             {/* Top Center: Title & Dynamic Subtitle */}
             <div className="absolute left-1/2 transform -translate-x-1/2 top-2 md:top-4 text-center w-full max-w-2xl pointer-events-none z-0 flex flex-col items-center gap-0.5">
                 <h1
-                    className="text-3xl md:text-5xl font-black text-white tracking-widest"
+                    className="text-5xl md:text-7xl font-black text-white tracking-widest"
                     style={{
                         textShadow: `0 4px 6px rgba(0,0,0,0.1), -2px -2px 0 ${currentMode.strokeColor}, 2px -2px 0 ${currentMode.strokeColor}, -2px 2px 0 ${currentMode.strokeColor}, 2px 2px 0 ${currentMode.strokeColor}, 0 3px 0 ${currentMode.strokeColor}`,
                         WebkitTextStroke: `2px ${currentMode.strokeColor}`,
@@ -48,7 +48,7 @@ export default function Header({ currentMode, onOpenSettings }: HeaderProps) {
                 <div className="overflow-hidden">
                     <p
                         key={currentMode.title}
-                        className="text-xl md:text-2xl font-semibold animate-slide-up tracking-wide"
+                        className="text-2xl md:text-3xl font-semibold animate-slide-up tracking-wide"
                         style={{ color: currentMode.themeColor, transition: 'color 0.5s ease' }}
                     >
                         {currentMode.title}
@@ -57,7 +57,7 @@ export default function Header({ currentMode, onOpenSettings }: HeaderProps) {
             </div>
 
             {/* Top Right: User Profile or Login Button */}
-            <div className="absolute right-4 md:right-8 top-4 md:top-6 z-20">
+            <div className="absolute right-4 md:right-8 top-4 md:top-6 z-[100]">
                 {session ? (
                     <div className="relative">
                         <button
@@ -74,7 +74,7 @@ export default function Header({ currentMode, onOpenSettings }: HeaderProps) {
                             />
                         </button>
                         {dropdownOpen && (
-                            <div className="absolute right-0 mt-2 w-36 bg-white rounded-lg shadow-xl overflow-hidden z-20">
+                            <div className="absolute right-0 mt-2 w-36 bg-white rounded-lg shadow-xl overflow-hidden z-[100]">
                                 <button
                                     onClick={handleOpenSettings}
                                     className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 font-medium transition-colors flex items-center gap-2"
